@@ -62,7 +62,7 @@ matice nulova(int m, int n)
 {
     matice mat = inicializace(m, n);
 
-    if(getError(mat) != BEZ_CHYBY)
+    if(getError() != BEZ_CHYBY)
         return mat;
 
     for(int i = 0; i < m; i++)
@@ -270,17 +270,18 @@ void getFileRowsColumns(FILE * file, unsigned int * rows, unsigned int * cols)
     rewind(file);
 }
 
-void fileToMatrix(FILE * file, matice * mat)
+matice fileToMatrix(FILE * file)
 {
     unsigned int rows = 0, cols = 0, i = 0, j = 0;
     float val = 0.000;
+    matice mat;
 
     getFileRowsColumns(file, &rows, &cols);
 
     if(getError() != BEZ_CHYBY)
-        return;
+        return mat;
 
-    * mat = inicializace(rows, cols);
+    mat = inicializace(rows, cols);
 
     while(fscanf(file, "%f", &val) != EOF)
     {
@@ -295,7 +296,7 @@ void fileToMatrix(FILE * file, matice * mat)
         }
     }
 
-
+    return mat;
 }
 
 matice nacti_ze_souboru(const char * soubor)
@@ -307,7 +308,7 @@ matice nacti_ze_souboru(const char * soubor)
         writeError(CHYBA_OTEVRENI);
         
     if(getError() == BEZ_CHYBY)
-        fileToMatrix(file, result);
+        result = fileToMatrix(file);
   
     if(fclose(file) == EOF)
         writeError(CHYBA_ZAVRENI);
@@ -315,3 +316,29 @@ matice nacti_ze_souboru(const char * soubor)
     return result;
 }
 
+void uloz_do_souboru(matice mat, const char * soubor)
+{
+    FILE * file = NULL;
+
+    if((file = fopen(soubor, "w")) == NULL)
+    {
+        writeError(CHYBA_OTEVRENI);
+        
+        return;
+    }
+
+    for(int i = 0; i < mat.m; i++)
+    {
+        for (int j = 0; j < mat.n; j++)
+            fprintf(file, "%f ", mat.matrix[i][j]);
+
+        fputc('\n', file);
+    }
+
+    if(fclose(file) == EOF)
+    {
+        writeError(CHYBA_ZAVRENI);
+
+        return;
+    }
+}

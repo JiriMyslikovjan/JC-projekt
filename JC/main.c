@@ -3,6 +3,5 @@
 
 int main()
 {
-    matice a = nacti_ze_souboru("./soubor.txt");
-    vypis(a);
+    uloz_do_souboru(jednotkova(4, 4), "soubor.txt");
 }
