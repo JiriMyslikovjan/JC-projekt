@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #define BEZ_CHYBY 0
 #define CHYBA_ALOKACE -1
@@ -27,6 +26,48 @@ int getError()
 void writeError(int i)
 { 
     chyba = i;
+}
+
+int velikost(matice mat, int dimenze)
+{
+    if(mat.initialized)
+    {
+        switch (dimenze)
+        {
+            case 1:
+                return mat.m;
+            
+            case 2:
+                return mat.n;
+            
+            default:
+                writeError(CHYBA_JINA);
+                break;
+        }
+    }
+
+    writeError(CHYBA_JINA);
+
+    return -1;
+}
+
+float prvek(matice mat, int i, int j)
+{
+    if(i < mat.m && j < mat.n && mat.initialized)
+        return mat.matrix[i][j];
+    
+    writeError(CHYBA_JINA);
+    
+    return -1;
+}
+
+void nastav_prvek(matice mat, int i, int j, float hodonota)
+{
+    if(i < mat.m && j < mat.n && mat.initialized)
+        mat.matrix[i][j] = hodonota;
+
+    else
+        writeError(CHYBA_JINA);
 }
 
 matice inicializace(int m, int n)
@@ -68,7 +109,7 @@ matice nulova(int m, int n)
     for(int i = 0; i < m; i++)
     {
         for(int j = 0; j < n; j++)
-            mat.matrix[i][j] = 0;
+            nastav_prvek(mat, i, j, 0);
     }
 
     return mat;
@@ -79,18 +120,17 @@ matice jednotkova(int m, int n)
     matice mat = nulova(m, n);
     int j = 0;
 
+    /* Musí být čtvercová ?
+    if(m != n)
+        writeError(CHYBA_TYPU);
+    */
+
     if(getError() != BEZ_CHYBY)
         return mat;
 
-    if(m != n)
-    {
-        writeError(CHYBA_TYPU);
-        return mat;
-    }
-
     for(int i = 0; i < m; i++)
     {
-        mat.matrix[i][j] = 1.0;
+        nastav_prvek(mat, i, j, 1.0);
         j++;
     }
 
@@ -101,7 +141,7 @@ void odstran(matice mat)
 {
     int m = mat.m;
 
-    if(mat.matrix != NULL)
+    if(mat.initialized)
     {
         for (int i = 0; i < m; i++)
         {
@@ -111,20 +151,26 @@ void odstran(matice mat)
 
         free(mat.matrix);
     }
+
+    else
+        writeError(CHYBA_JINA);
 }
 
 void vypis(matice mat)
 {
-    for (int i = 0; i < mat.m; i++)
+    if(mat.initialized)
     {
-        for (int j = 0; j < mat.n; j++)
+        for (int i = 0; i < mat.m; i++)
         {
-            printf("%f ", mat.matrix[i][j]);
+            for (int j = 0; j < mat.n; j++)
+                printf("%f ", prvek(mat, i, j));
+            
+            printf("\n");
         }
-
-        printf("\n");
     }
     
+    else
+        writeError(CHYBA_JINA);
 }
 
 matice plus(matice mat1, matice mat2)
@@ -138,15 +184,14 @@ matice plus(matice mat1, matice mat2)
     {
         for(int i = 0; i < mat1.m; i++)
         {
-            for (int j = 0; i < mat1.n; j++)
+            for (int j = 0; j < mat1.n; j++)
                 result.matrix[i][j] = mat1.matrix[i][j] + mat2.matrix[i][j];
                 
         }
             
         return result;
     }
-
-    
+  
     return result;
 }
 
@@ -161,14 +206,13 @@ matice minus(matice mat1, matice mat2)
         {
             for(int i = 0; i < mat1.m; i++)
             {
-                for (int j = 0; i < mat1.n; j++)
+                for (int j = 0; j < mat1.n; j++)
                     result.matrix[i][j] = mat1.matrix[i][j] - mat2.matrix[i][j];
                 
             }
             
             return result;
         }
-
     
     return result;
 }
@@ -181,35 +225,33 @@ matice nasobeni(matice mat1, float skalar)
         {
             for(int i = 0; i < mat1.m; i++)
             {
-                for (int j = 0; i < mat1.n; j++)
+                for (int j = 0; j < mat1.n; j++)
                     result.matrix[i][j] = mat1.matrix[i][j] * skalar;
                 
             }
             
             return result;
         }
-
-    
+  
     return result;
 }
 
-
 matice krat(matice mat1, matice mat2)
 {
-    matice result = inicializace(mat1.m, mat2.n);
+    matice result = inicializace(mat2.n, mat1.m);
     float sum = 0;
     
     if(mat1.n != mat2.m)
         writeError(CHYBA_TYPU);
 
-    if(getError() != BEZ_CHYBY)
+    if(getError() == BEZ_CHYBY)
     {
         for(int i = 0; i < mat1.m; i++)
         {
             for(int j = 0; j < mat2.n; j++)
             {
                 sum = 0;
-                for(int k = 0; k < mat1.n; k++)
+                for(int k = 0; k < mat2.m; k++)
                 {
                     sum += mat1.matrix[i][k] * mat2.matrix[k][j];
                 }
@@ -230,7 +272,7 @@ matice transpozice(matice mat)
         for (int i = 0; i < mat.m; i++)
 	    {
 		    for (int j = 0; j < mat.n; j++)
-			    result.matrix[i][j] = mat.matrix[j][i];
+			    result.matrix[j][i] = mat.matrix[i][j];
 	    }
     }
 	
